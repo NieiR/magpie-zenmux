@@ -79,7 +79,6 @@ zenmux · Builder Starter · until Oct 27 · API key …dff9  subscription  5h 0
 | **按量付费（PAYG）余额查询** | 调 `/api/v1/management/payg/balance` 展示账户当前可用美元总余额（`$total_credits left`） |
 | **按套餐等级自动过滤模型** | 订阅 Key（`sk-ss-v1-…`）自动结合当前套餐等级（`starter` / `pro` / `max` / `ultra`）与公开套餐清单过滤可用模型；按量 Key（`sk-ai-v1-…`）开放全量模型 |
 | **原生多协议分流** | `anthropic/*` 走 Anthropic Messages（`/api/anthropic/v1/messages`），`openai/*` 走 OpenAI Responses（`/api/v1/responses`），其余对话模型走 Chat Completions（`/api/v1/chat/completions`） |
-| **TypeSafe System One 意图分类器** | 开启 `decide: true`，自动标记 `typesafe/jev-*` 为决策模型，可直接选作 Magpie 路由组的意图分类器 |
 | **原生联网搜索透传** | 开启 `searches: true`，Claude Code 与 Codex 的原生 `web_search` 请求直接透传至 ZenMux 上游 |
 | **精准 403 状态区分** | 区分 ZenMux 的 `403 access_denied`（Key 失效，标记账号需重登）与 `403 safety_check_failed`（内容安全拦截，保持账号在线） |
 

@@ -10,7 +10,7 @@ Date: 2026-10-17. Windows 11 amd64; Magpie `0.1.1278`; Bun `1.3.14`.
   - Automatic key-type classification (`sk-ss-v1-…` → `subscription`, `sk-ai-v1-…` → `payg`, `sk-mg-v1-…` → `management`).
   - Subscription detail mapping (`usage_percentage` ratio `0..1` → `0..100`%, 5-hour and 7-day rolling Flow windows, USD equivalent values, and `remaining_resets` → `resets.fiveHour`).
   - PAYG balance mapping (`total_credits` → `balance: "$..."` with empty `windows`).
-  - Protocol selection (`anthropic/*` → `@ai-sdk/anthropic` at `/api/anthropic/v1`, `openai/*` → `@ai-sdk/openai` at `/api/v1`, `typesafe/jev-*` → `decides: true`).
+  - Protocol selection (`anthropic/*` → `@ai-sdk/anthropic` at `/api/anthropic/v1`, `openai/*` → `@ai-sdk/openai` at `/api/v1`).
   - `403 access_denied` (`X-Magpie-Sign-In: expired`) vs `403 safety_check_failed` (`X-Magpie-Sign-In: kept`).
 
 ## Real Magpie host & live ZenMux API verification

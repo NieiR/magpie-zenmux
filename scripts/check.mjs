@@ -50,8 +50,8 @@ for (const fn of fns) {
     if (!p || !p.npm || !p.models || !Object.keys(p.models).length) {
       problems.push(`${fn.name}: config hook did not populate provider.zenmux`)
     }
-    if (p?.decide !== true || p?.searches !== true) {
-      problems.push(`${fn.name}: config hook did not set decide and searches`)
+    if (p?.searches !== true) {
+      problems.push(`${fn.name}: config hook did not set searches`)
     }
   }
   if (hooks.provider?.id !== "zenmux" || typeof hooks.provider?.models !== "function") {

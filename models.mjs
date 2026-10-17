@@ -118,15 +118,4 @@ export const SEED_MODELS = [
     input: ["text"],
     free: true,
   },
-  {
-    id: "typesafe/jev-1.14",
-    name: "TypeSafe: Jev 1.14",
-    npm: "@ai-sdk/openai-compatible",
-    url: "https://zenmux.ai/api/v1",
-    context: 32_000,
-    output: 32_000,
-    reasoning: false,
-    input: ["text"],
-    decides: true,
-  },
 ]

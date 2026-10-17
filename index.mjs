@@ -271,9 +271,6 @@ function protocolOf(slug, suitableApi) {
         .filter(Boolean)
     : []
 
-  if (apis.includes("systemone") || id.startsWith("typesafe/jev")) {
-    return { npm: "@ai-sdk/openai-compatible", url: OPENAI_BASE, decides: true }
-  }
   if (
     apis.length > 0 &&
     !apis.some((a) => ["chat.completions", "responses", "messages", "gemini"].includes(a))
@@ -284,18 +281,18 @@ function protocolOf(slug, suitableApi) {
     id.startsWith("anthropic/") ||
     (apis.includes("messages") && !apis.includes("chat.completions") && !apis.includes("responses"))
   ) {
-    return { npm: "@ai-sdk/anthropic", url: ANTHROPIC_BASE, decides: false }
+    return { npm: "@ai-sdk/anthropic", url: ANTHROPIC_BASE }
   }
   if (
     (id.startsWith("openai/") && (apis.includes("responses") || apis.length === 0)) ||
     (apis.includes("responses") && !apis.includes("chat.completions"))
   ) {
-    return { npm: "@ai-sdk/openai", url: OPENAI_BASE, decides: false }
+    return { npm: "@ai-sdk/openai", url: OPENAI_BASE }
   }
   if (apis.length > 0 && apis.every((a) => a === "gemini")) {
-    return { npm: "@ai-sdk/google", url: VERTEX_BASE, decides: false }
+    return { npm: "@ai-sdk/google", url: VERTEX_BASE }
   }
-  return { npm: "@ai-sdk/openai-compatible", url: OPENAI_BASE, decides: false }
+  return { npm: "@ai-sdk/openai-compatible", url: OPENAI_BASE }
 }
 
 function configModelOf(m) {
@@ -309,7 +306,7 @@ function configModelOf(m) {
     api: { id: m.id, npm: m.npm, url: m.url },
     limit: { context: m.context || 128_000, output: m.output || 32_000 },
     reasoning: !!m.reasoning,
-    tool_call: !m.decides,
+    tool_call: true,
     attachment: input.some((x) => x !== "text"),
     modalities: { input, output },
     ...(m.cost && { cost: m.cost }),
@@ -317,7 +314,6 @@ function configModelOf(m) {
       variants: Object.fromEntries(efforts.map((e) => [e, { reasoningEffort: e }])),
     }),
     ...(m.free && { free: true }),
-    ...(m.decides && { decides: true }),
   }
 }
 
@@ -338,14 +334,12 @@ function servedModelFromAvailable(item, baseModel) {
       ? Number(item.supports_reasoning) > 0 || item.supports_reasoning === true
       : !!baseModel?.capabilities?.reasoning
   const toolcall =
-    proto.decides
-      ? false
-      : item?.supports_tool_parameters !== undefined
-        ? Number(item.supports_tool_parameters) > 0 || item.supports_tool_parameters === true
-        : baseModel?.capabilities?.toolcall ?? true
+    item?.supports_tool_parameters !== undefined
+      ? Number(item.supports_tool_parameters) > 0 || item.supports_tool_parameters === true
+      : baseModel?.capabilities?.toolcall ?? true
 
   const inList = normalizeModalities(item?.input_modalities, ["text"])
-  const outList = proto.decides ? ["text"] : normalizeModalities(item?.output_modalities, ["text"])
+  const outList = normalizeModalities(item?.output_modalities, ["text"])
 
   const discountRaw = text(item?.pricing_discount)
   const discount = discountRaw !== "" && Number.isFinite(Number(discountRaw)) ? Number(discountRaw) : 1
@@ -359,7 +353,7 @@ function servedModelFromAvailable(item, baseModel) {
   const isFree =
     item?.isFree === true ||
     discount === 0 ||
-    (item?.pricing_prompt !== undefined && rawPrompt === 0 && rawCompletion === 0 && !proto.decides)
+    (item?.pricing_prompt !== undefined && rawPrompt === 0 && rawCompletion === 0)
 
   const cost = isFree
     ? { input: 0, output: 0, cache: { read: 0, write: 0 } }
@@ -408,7 +402,6 @@ function servedModelFromAvailable(item, baseModel) {
     variants,
     ...(isFree ? { free: true } : { free: false }),
     ...(factor > 0 && factor < 1 ? { rate: factor, rateWas: 1 } : {}),
-    ...(proto.decides ? { decides: true } : {}),
   }
 }
 
@@ -416,8 +409,8 @@ function servedModelFromV1(item, baseModel) {
   const id = text(item?.id)
   if (!id) return null
   const outModalities = Array.isArray(item?.output_modalities) ? item.output_modalities : ["text"]
-  if (!outModalities.includes("text") && !id.startsWith("typesafe/jev")) return null
-  const proto = protocolOf(id, id.startsWith("typesafe/jev") ? "systemone" : "")
+  if (!outModalities.includes("text")) return null
+  const proto = protocolOf(id, "")
   if (!proto) return null
 
   const promptPrice = num(item?.pricings?.prompt?.[0]?.value)
@@ -427,7 +420,7 @@ function servedModelFromV1(item, baseModel) {
     num(item?.pricings?.input_cache_write_5_min?.[0]?.value) ||
     num(item?.pricings?.input_cache_write?.[0]?.value)
   const hasPricing = Array.isArray(item?.pricings?.prompt) || Array.isArray(item?.pricings?.completion)
-  const isFree = hasPricing && promptPrice === 0 && completionPrice === 0 && !proto.decides
+  const isFree = hasPricing && promptPrice === 0 && completionPrice === 0
 
   return servedModelFromAvailable(
     {
@@ -436,7 +429,7 @@ function servedModelFromV1(item, baseModel) {
       context_length: num(item?.context_length) || baseModel?.limit?.context || 128_000,
       max_completion_tokens: num(item?.max_tokens) || baseModel?.limit?.output || 32_000,
       supports_reasoning: item?.capabilities?.reasoning ? 1 : 0,
-      supports_tool_parameters: proto.decides ? 0 : 1,
+      supports_tool_parameters: 1,
       input_modalities: item?.input_modalities ?? ["text"],
       output_modalities: outModalities,
       pricing_prompt: String(promptPrice),
@@ -446,7 +439,7 @@ function servedModelFromV1(item, baseModel) {
       pricing_discount: isFree ? "0" : "1",
       isFree,
       publish_time: text(item?.publish_time),
-      suitable_api: proto.decides ? "systemone" : "",
+      suitable_api: "",
     },
     baseModel,
   )
@@ -543,7 +536,6 @@ export const ZenMuxAuthPlugin = async (input = {}) => {
         name: "ZenMux",
         npm: "@ai-sdk/openai-compatible",
         api: OPENAI_BASE,
-        decide: true,
         searches: true,
         ...was,
         models: { ...seedModels(), ...(was.models ?? {}) },
@@ -719,7 +711,7 @@ export const ZenMuxAuthPlugin = async (input = {}) => {
               const allowed = await fetchPlanModelSet(tier, { signal }).catch(() => null)
               if (allowed && allowed.size > 0) {
                 const filtered = Object.fromEntries(
-                  Object.entries(discovered).filter(([id, m]) => allowed.has(id) || m.free || m.decides),
+                  Object.entries(discovered).filter(([id, m]) => allowed.has(id) || m.free),
                 )
                 if (Object.keys(filtered).length > 0) return filtered
               }

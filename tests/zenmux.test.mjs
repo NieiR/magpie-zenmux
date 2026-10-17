@@ -79,17 +79,10 @@ test("protocol routing and 403 access_denied vs safety_check_failed", async () =
   assert.deepEqual(I.protocolOf("anthropic/claude-sonnet-4.5", "chat.completions,messages,responses"), {
     npm: "@ai-sdk/anthropic",
     url: "https://zenmux.ai/api/anthropic/v1",
-    decides: false,
   })
   assert.deepEqual(I.protocolOf("openai/gpt-5.4", "responses,messages,chat.completions"), {
     npm: "@ai-sdk/openai",
     url: "https://zenmux.ai/api/v1",
-    decides: false,
-  })
-  assert.deepEqual(I.protocolOf("typesafe/jev-1.14", "systemone"), {
-    npm: "@ai-sdk/openai-compatible",
-    url: "https://zenmux.ai/api/v1",
-    decides: true,
   })
 
   const realFetch = globalThis.fetch
